@@ -5,6 +5,7 @@ $(document).ready(function () {
 var cardapio = {};
 
 var MEU_CARRINHO = [];
+var MEU_ENDERECO = null;
 
 var VALOR_CARRINHO = 0;
 var VALOR_ENTREGA = 5;
@@ -288,7 +289,106 @@ cardapio.metodos = {
         })
     },
 
-    
+    // carregar a etapa de endereços
+    carregarEndereco: () => {
+        if (MEU_CARRINHO.length <= 0) {
+            cardapio.metodos.mensagem('Seu carrinho esta vazio.');
+            return;
+        }
+
+        cardapio.metodos.carregarEtapa(2);
+    },
+
+    // API ViaCEP
+    buscarCep: () => {
+        var cep = $("#txtCEP").val().trim().replace(/D/g, '');
+
+        if(cep != "") {
+            var validaCep = /^[0-9]{8}$/;
+
+            if(validaCep.test(cep)) {
+
+                $.getJSON("https://viacep.com.br/ws/" + cep + "/json/?callback=?", function (dados) {
+                  
+                    if(!("erro" in dados)){
+                        // Preencher os campos com os valores retornados
+                        $("#txtEndereco").val(dados.logradouro);
+                        $("#txtBairro").val(dados.bairro);
+                        $("#txtCidade").val(dados.localidade);
+                        $("#ddlUf").val(dados.uf);
+                        $("#txtNumero").focus();
+                      
+                    }else {
+                        cardapio.metodos.mensagem('CEP não encontrado. Preencha as informações manualmente.');
+                        $("#txtEndereco").focus();
+                    }
+                })
+
+            }else {
+                cardapio.metodos.mensagem('Formato do CEP inválido.');
+                $("#txtCEP").focus();
+            }
+
+        }else {
+            cardapio.metodos.mensagem('Por favor, informe o CEP.');
+            $("#txtCEP").focus();
+        }
+    },
+
+    // validação antes da etapa 3
+    resumoPedido: () => {
+        let cep = $("#txtCEP").val().trim();
+        let endereco = $("#txtEndereco").val().trim();
+        let bairro = $("#txtBairro").val().trim();
+        let cidade = $("#txtCidade").val().trim();
+        let uf = $("#ddlUf").val().trim();
+        let numero = $("#txtNumero").val().trim();
+        let complemento = $("#txtComplemento").val().trim();
+  
+        if(cep.length <= 0) {
+            cardapio.metodos.mensagem('Por favor, informe o CEP.');
+            $("#txtCEP").focus();
+            return;
+        }
+        if(endereco.length <= 0) {
+            cardapio.metodos.mensagem('Por favor, informe o Endereço.');
+            $("#txtEndereco").focus();
+            return;
+        }
+        if(bairro.length <= 0) {
+            cardapio.metodos.mensagem('Por favor, informe o Bairro.');
+            $("#txtBairro").focus();
+            return;
+        }
+        if(cidade.length <= 0) {
+            cardapio.metodos.mensagem('Por favor, informe a Cidade.');
+            $("#txtCidade").focus();
+            return;
+        }
+        if(uf.length == "-1") {
+            cardapio.metodos.mensagem('Por favor, informe o UF.');
+            $("#ddlUf").focus();
+            return;
+        }
+        if(numero.length <= 0) {
+            cardapio.metodos.mensagem('Por favor, informe o Número.');
+            $("#txtNumero").focus();
+            return;
+        }
+
+        MEU_ENDERECO = {
+            cep: cep,
+            endereco: endereco,
+            bairro: bairro,
+            cidade: cidade,
+            uf: uf,
+            numero: numero,
+            complemento: complemento
+        }
+
+        cardapio.metodos.carregarEtapa(3);
+
+    },
 
 
 
@@ -309,7 +409,7 @@ cardapio.metodos = {
             }, 800);
 
         }, tempo)
-    }
+    },
 }
 
 cardapio.templates = {
